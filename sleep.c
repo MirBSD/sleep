@@ -1,4 +1,4 @@
-/*	$OpenBSD: sleep.c,v 1.16 2003/06/02 23:32:09 millert Exp $	*/
+/*	$OpenBSD: sleep.c,v 1.17 2004/09/16 08:35:49 deraadt Exp $	*/
 /*	$NetBSD: sleep.c,v 1.8 1995/03/21 09:11:11 cgd Exp $	*/
 
 /*
@@ -30,19 +30,11 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1988, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)sleep.c	8.3 (Berkeley) 4/2/94";
-#else
-static char rcsid[] = "$OpenBSD: sleep.c,v 1.16 2003/06/02 23:32:09 millert Exp $";
-#endif
-#endif /* not lint */
+#include <sys/cdefs.h>
+__COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n");
+__SCCSID("@(#)sleep.c	8.3 (Berkeley) 4/2/94");
+__RCSID("$MirOS: src/bin/sleep/sleep.c,v 1.2 2007/07/05 23:09:33 tg Exp $");
 
 #include <ctype.h>
 #include <errno.h>
@@ -68,7 +60,9 @@ main(int argc, char *argv[])
 	struct timespec rqtp;
 	int i;
 
+#ifndef __MirBSD__
 	setlocale(LC_ALL, "");
+#endif
 
 	signal(SIGALRM, alarmh);
 
@@ -135,8 +129,9 @@ usage(void)
  * POSIX 1003.2 says sleep should exit with 0 return code on reception
  * of SIGALRM.
  */
+/* ARGSUSED */
 void
-alarmh(int sigraised)
+alarmh(int signo)
 {
 	/*
 	 * exit() flushes stdio buffers, which is not legal in a signal
