@@ -1,0 +1,117 @@
+.\" $MirOS: src/bin/sleep/sleep.1,v 1.3 2021/01/23 03:36:59 tg Exp $
+.\"-
+.\" Copyright © 2021
+.\"      mirabilos <m@mirbsd.org>
+.\"
+.\" Provided that these terms and disclaimer and all copyright notices
+.\" are retained or reproduced in an accompanying document, permission
+.\" is granted to deal in this work without restriction, including un‐
+.\" limited rights to use, publicly perform, distribute, sell, modify,
+.\" merge, give away, or sublicence.
+.\"
+.\" This work is provided “AS IS” and WITHOUT WARRANTY of any kind, to
+.\" the utmost extent permitted by applicable law, neither express nor
+.\" implied; without malicious intent or gross negligence. In no event
+.\" may a licensor, author or contributor be held liable for indirect,
+.\" direct, other damage, loss, or other issues arising in any way out
+.\" of dealing in the work, even if advised of the possibility of such
+.\" damage or existence of a defect, except proven that it results out
+.\" of said person’s immediate fault when using the work as intended.
+.\"-
+.Dd January 23, 2021
+.Dt SLEEP 1
+.Os MirBSD
+.Sh NAME
+.Nm sleep
+.Nd suspend execution for an interval of time
+.Sh SYNOPSIS
+.Nm
+.Ar time Op Ar ...
+.Sh DESCRIPTION
+The
+.Nm
+utility suspends execution for the amount of time specified by its operands.
+.Pp
+.Nm
+is commonly used to delay proceeding within a series of commands.
+Another use is to schedule the execution of other commands, but
+.Nm
+will not take changes to the system clock that occur during its
+execution into account (it sleeps
+.Dq for Ar time No seconds ,
+not
+.Dq until a specific time ) ;
+it also uses the simplified notion of a day having 86400 seconds.
+.Pp
+Each
+.Ar time
+operand (multiple operands are added together to form a total amount of
+time to sleep) must be comprised of a positive number, which may contain
+a decimal fraction, and optionally a suffix letter denoting a scaling factor.
+The scaling factors supported are as follows:
+.Bl -tag -width 1n -offset 2n
+.It Ic s
+seconds (1); default
+.It Ic m
+minutes (60)
+.It Ic h
+hours (3600)
+.It Ic d
+days (86400)
+.El
+.Sh EXAMPLES
+Monitor the growth of a file without consuming too many resources:
+.Pp
+.Bd -literal -offset indent -compact
+while sleep 5; do
+	ls \-l file
+done
+.Ed
+.Pp
+Wait an half hour before running the script
+.Pa command_file
+(see also the
+.Xr at 1
+utility):
+.Pp
+.Dl (sleep 1800; sh command_file \*(Gterrors 2\*(Gt&1) &
+.Sh DIAGNOSTICS
+The
+.Nm
+utility exits 0 on success or upon receipt of
+.Dv SIGALRM ,
+and \*(Gt0 if an error occurs.
+.Sh SEE ALSO
+.Xr at 1 ,
+.Xr select 2
+.Sh STANDARDS
+The
+.Nm
+utility conforms to
+.St -p1003.1-2008 .
+.Pp
+The handling of fractional arguments is provided as an extension to the
+specification.
+The handling of multiple arguments and an optional suffix is provided for
+compatibility with
+.Tn GNU
+coreutils'
+.Nm
+utility.
+.Sh AUTHORS
+.An mirabilos Aq m@mirbsd.org
+.Sh CAVEATS
+.Nm
+parses fractional arguments up to six digits after the period;
+any further digits are silently ignored.
+Suffix scaling is performed afterwards and so can deviate up to 86.4 ms.
+.Pp
+The underlying system call accepts input to the microsecond but may be
+using a clock with coarse granularity, which affects the accuracy of
+the time actually slept; the
+.Nm time
+utility is known to use a much less accurate timer, but compiling the
+.Nm
+utility with
+.Ic \-DDEBUG
+will show that it always sleeps for at least the requested time.
