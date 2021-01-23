@@ -110,7 +110,7 @@
 #endif
 
 #ifdef EXTERN
-__RCSID("$MirOS: src/bin/sleep/sleep.h,v 1.1 2021/01/23 03:37:00 tg Exp $");
+__RCSID("$MirOS: src/bin/sleep/sleep.h,v 1.2 2021/01/23 06:12:47 tg Exp $");
 #endif
 
 #define ord(c)			((unsigned int)(unsigned char)(c))
@@ -121,8 +121,8 @@ __RCSID("$MirOS: src/bin/sleep/sleep.h,v 1.1 2021/01/23 03:37:00 tg Exp $");
 	((t)~(t)0))
 
 /* check for overflow */
-#define notoktomul(t,val,c)	(((val) != 0) && ((c) != 0) && \
-				    ((type_max(t) / (t)(c)) < (t)(val)))
+#define notoktomula(t,val,c,a)	(((val) != 0) && ((c) != 0) && \
+	(((type_max(t) - (t)(a)) / (t)(c)) < (t)(val)))
 #define notoktoadd(t,val,c)	((t)(val) > (type_max(t) - (t)(c)))
 
 /* missing functions */

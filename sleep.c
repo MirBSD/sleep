@@ -21,7 +21,7 @@
 #define EXTERN
 #include "sleep.h"
 
-__RCSID("$MirOS: src/bin/sleep/sleep.c,v 1.4 2021/01/23 03:36:59 tg Exp $");
+__RCSID("$MirOS: src/bin/sleep/sleep.c,v 1.5 2021/01/23 06:12:47 tg Exp $");
 
 #ifdef SMALL
 static const char ERR[4] = { 'E', 'R', 'R', '\n' };
@@ -38,7 +38,7 @@ static void die(const char *, ...)
 static void handler(int)
     MKSH_A_NORETURN;
 #endif
-static unsigned int classify(unsigned int);
+static unsigned int classify(const char *);
 static int dosleep(time_t, unsigned int);
 
 #ifndef SMALL
@@ -66,13 +66,11 @@ handler(int signo MKSH_A_UNUSED)
 
 /* 0-9; 10=NUL 11=factor 12=period 13=unknown */
 static unsigned int
-classify(unsigned int ch)
+classify(const char *cp)
 {
-	switch (ch) {
+	switch (ord(*cp)) {
 	case ord('\0'):
 		return (10);
-	case ord('.'):
-		return (12);
 	case ord('0'):
 		return (0);
 	case ord('1'):
@@ -93,11 +91,17 @@ classify(unsigned int ch)
 		return (8);
 	case ord('9'):
 		return (9);
+	case ord('.'):
+		return (12);
+#ifndef SMALL
 	case ord('s'):
 	case ord('m'):
 	case ord('h'):
 	case ord('d'):
-		return (11);
+		if (1[cp] == '\0')
+			return (11);
+		/* FALLTHROUGH */
+#endif
 	default:
 		return (13);
 	}
@@ -144,101 +148,96 @@ main(int argc, char *argv[])
 	signal(SIGALRM, handler);
 #endif
 
-	argp = 1;
-	if (argp < argc && !strcmp(argv[argp], "--"))
-		++argp;
+	argp = 1 + (argc > 1 &&
+	    ord(argv[1][0]) == ord('-') &&
+	    ord(argv[1][1]) == ord('-') &&
+	    !argv[1][2]);
 	if (!(argp < argc))
 		die("operand is mandatory");
-
 	while (argp < argc) {
 		unsigned int i, j, tU = 0;
 		time_t tS = 0;
-		const char *cp = argv[argp];
+		const char *cp = argv[argp++];
 		char argvalid = 0;
  parse_sec:
-		if ((i = classify(ord(*cp))) > 9) switch (i) {
-		case 10:
-			goto parse_out;
-		case 11:
-			goto parse_factor;
-		case 12:
-			++cp;
-			j = 100000;
-			goto parse_usec;
-		default:
-			die("invalid char '%c' in operand: %s",
-			    *cp, argv[argp]);
-		}
-		argvalid = 1;
-		if (notoktomul(time_t, tS, 10)) {
+		if ((i = classify(cp++)) < 10) {
+			if (notoktomula(time_t, tS, 10, i)) {
+#ifndef SMALL
  overflow:
-			die("argument too large: %s", argv[argp]);
-		}
-		tS *= 10;
-		if (notoktoadd(time_t, tS, i))
-			goto overflow;
-		tS += i;
-		++cp;
-		goto parse_sec;
- parse_usec:
-		if ((i = classify(ord(*cp))) > 9) switch (i) {
-		case 10:
+#endif
+				die("argument too large: %s", argv[--argp]);
+			}
+			tS = (tS * 10) + i;
+			argvalid = 1;
+			goto parse_sec;
+		} else if (i == 10) {
 			goto parse_out;
-		case 11:
+#ifndef SMALL
+		} else if (i == 11) {
 			goto parse_factor;
-		default:
+#endif
+		} else if (i != 12) {
+ invopnd:
 			die("invalid char '%c' in operand: %s",
-			    *cp, argv[argp]);
+			    *--cp, argv[--argp]);
 		}
-		argvalid = 1;
-		if (j) {
-			tU += i * j;
-			j /= 10;
-			/* we continue to parse digits even past µs */
-		}
-		++cp;
-		goto parse_usec;
+		/* i == 12 */
+		j = 100000;
+ parse_usec:
+		if ((i = classify(cp++)) < 10) {
+			if (j) {
+				tU += i * j;
+				j /= 10;
+				/* we continue to parse digits even past µs */
+			}
+			argvalid = 1;
+			goto parse_usec;
+#ifndef SMALL
+		} else if (i == 11) {
  parse_factor:
-		if (cp[1])
-			die("operand continues past %c suffix: %s",
-			    *cp, argv[argp]);
-		switch (ord(*cp)) {
-		default: /* ord('s'): */
-			goto parse_out;
-		case ord('m'):
-			i = 60;
-			break;
-		case ord('h'):
-			i = 3600;
-			break;
-		case ord('d'):
-			i = 86400;
-			break;
+			switch (ord(cp[-1])) {
+			default: /* ord('s'): */
+				goto parse_out;
+			case ord('m'):
+				i = 60;
+				break;
+			case ord('h'):
+				i = 3600;
+				break;
+			case ord('d'):
+				i = 86400;
+				break;
+			}
+			if (notoktomula(time_t, tS, i, 0))
+				goto overflow;
+			tS *= i;
+			if (tU) {
+				/* split tU .mmmuuu to j=mmm tU=uuu and scale */
+				j = (tU / 1000U) * i;
+				tU = (tU % 1000U) * i;
+				/* add s/ms share of tU to j */
+				j += tU / 1000U;
+				/* add s share of j to tS */
+				i = j / 1000U;
+				if (notoktoadd(time_t, tS, i))
+					goto overflow;
+				tS += i;
+				/* reconstruct µs share of tU + ms share of j */
+				tU = (tU % 1000U) + ((j % 1000U) * 1000U);
+			}
+#endif
+		} else if (i != 10) {
+			goto invopnd;
 		}
-		if (notoktomul(time_t, tS, i))
-			goto overflow;
-		tS *= i;
-		if (!tU)
-			goto parse_out;
-		/* split tU .mmmuuu to j=mmm tU=uuu and scale */
-		j = (tU / 1000U) * i;
-		tU = (tU % 1000U) * i;
-		/* add s/ms share of tU to j */
-		j += tU / 1000U;
-		/* add s share of j to tS */
-		if (notoktoadd(time_t, tS, j / 1000U))
-			goto overflow;
-		tS += j / 1000U;
-		/* reconstruct µs share of tU + ms share of j */
-		tU = (tU % 1000U) + ((j % 1000U) * 1000U);
+		/* i == 10 or 11-and-past-parsing-factor */
  parse_out:
 		if (!argvalid)
-			die("operand with no digits: %s", argv[argp]);
+			die("operand with no digits: %s", argv[--argp]);
 #ifdef TEST
 		printf("add %llu.%06u\n", (unsigned long long)tS, tU);
 #endif
 		sU += tU;
-		while (sU > 999999U) {
+		if (sU > 999999U) {
 			if (notoktoadd(time_t, tS, 1))
 				goto sumover;
 			++tS;
@@ -246,13 +245,12 @@ main(int argc, char *argv[])
 		}
 		if (notoktoadd(time_t, sS, tS)) {
  sumover:
-			die("argument sum too large at: %s", argv[argp]);
+			die("argument sum too large at: %s", argv[--argp]);
 		}
 		sS += tS;
 #ifdef TEST
 		printf("sum %llu.%06u\n\n", (unsigned long long)sS, sU);
 #endif
-		++argp;
 	}
 
 	while (sS > (21U * 86400U)) {
