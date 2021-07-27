@@ -20,23 +20,29 @@
  * of said person’s immediate fault when using the work as intended.
  */
 
+#ifdef MKSH_USE_AUTOCONF_H
+/* things that “should” have been on the command line */
+#include "autoconf.h"
+#undef MKSH_USE_AUTOCONF_H
+#endif
+
 #if HAVE_SYS_PARAM_H
 #include <sys/param.h>
 #endif
 #include <sys/types.h>
-#if HAVE_BOTH_TIME_H
+#if HAVE_BOTH_TIME_H && HAVE_SELECT_TIME_H
 #include <sys/time.h>
 #include <time.h>
-#elif HAVE_SYS_TIME_H
+#elif HAVE_SYS_TIME_H && HAVE_SELECT_TIME_H
 #include <sys/time.h>
 #elif HAVE_TIME_H
 #include <time.h>
 #endif
-#if HAVE_SYS_BSDTYPES_H
-#include <sys/bsdtypes.h>
-#endif
 #if HAVE_SYS_SELECT_H
 #include <sys/select.h>
+#endif
+#if HAVE_SYS_BSDTYPES_H
+#include <sys/bsdtypes.h>
 #endif
 #if HAVE_BSTRING_H
 #include <bstring.h>
@@ -110,7 +116,7 @@
 #endif
 
 #ifdef EXTERN
-__RCSID("$MirOS: src/bin/sleep/sleep.h,v 1.2 2021/01/23 06:12:47 tg Exp $");
+__RCSID("$MirOS: src/bin/sleep/sleep.h,v 1.3 2021/07/27 20:11:54 tg Exp $");
 #endif
 
 #define ord(c)			((unsigned int)(unsigned char)(c))

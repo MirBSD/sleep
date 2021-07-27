@@ -1,4 +1,4 @@
-# $MirOS: src/bin/sleep/Makefile,v 1.3 2021/01/23 03:36:59 tg Exp $
+# $MirOS: src/bin/sleep/Makefile,v 1.4 2021/07/27 20:11:54 tg Exp $
 
 .include <bsd.own.mk>
 
@@ -9,8 +9,9 @@ PROG=		sleep
 CPPFLAGS+=	\
 		-DHAVE_ATTRIBUTE_FORMAT=1 -DHAVE_ATTRIBUTE_NORETURN=1 \
 		-DHAVE_ATTRIBUTE_UNUSED=1 -DHAVE_SYS_TIME_H=1 -DHAVE_TIME_H=1 \
-		-DHAVE_BOTH_TIME_H=1 -DHAVE_SYS_BSDTYPES_H=0 \
-		-DHAVE_SYS_PARAM_H=1 -DHAVE_SYS_SELECT_H=1 -DHAVE_BSTRING_H=0 \
+		-DHAVE_BOTH_TIME_H=1 -DHAVE_SYS_SELECT_H=1 \
+		-DHAVE_SELECT_TIME_H=1 -DHAVE_SYS_BSDTYPES_H=0 \
+		-DHAVE_SYS_PARAM_H=1 -DHAVE_BSTRING_H=0 \
 		-DHAVE_STRINGS_H=1 -DHAVE_STRERROR=1
 COPTS+=		-fno-asynchronous-unwind-tables -fno-strict-aliasing -Wall
 .endif
