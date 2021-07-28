@@ -21,7 +21,7 @@
 #define EXTERN
 #include "sleep.h"
 
-__RCSID("$MirOS: src/bin/sleep/sleep.c,v 1.5 2021/01/23 06:12:47 tg Exp $");
+__RCSID("$MirOS: src/bin/sleep/sleep.c,v 1.6 2021/07/28 02:00:37 tg Exp $");
 
 #ifdef SMALL
 static const char ERR[4] = { 'E', 'R', 'R', '\n' };
@@ -100,8 +100,8 @@ classify(const char *cp)
 	case ord('d'):
 		if (1[cp] == '\0')
 			return (11);
-		/* FALLTHROUGH */
 #endif
+		/* FALLTHROUGH */
 	default:
 		return (13);
 	}
