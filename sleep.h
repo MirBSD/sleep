@@ -76,6 +76,11 @@
 #else
 #define MKSH_A_UNUSED		/* nothing */
 #endif
+#if HAVE_ATTRIBUTE_USED
+#define MKSH_A_USED		__attribute__((__used__))
+#else
+#define MKSH_A_USED		/* nothing */
+#endif
 
 #if defined(MirBSD) && (MirBSD >= 0x09A1) && \
     defined(__ELF__) && defined(__GNUC__) && \
@@ -116,7 +121,7 @@
 #endif
 
 #ifdef EXTERN
-__RCSID("$MirOS: src/bin/sleep/sleep.h,v 1.3 2021/07/27 20:11:54 tg Exp $");
+__RCSID("$MirOS: src/bin/sleep/sleep.h,v 1.4 2021/08/13 22:29:27 tg Exp $");
 #endif
 
 #define ord(c)			((unsigned int)(unsigned char)(c))

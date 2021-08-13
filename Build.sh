@@ -1,5 +1,5 @@
 #!/bin/sh
-srcversion='$MirOS: src/bin/sleep/Build.sh,v 1.2 2021/07/27 20:11:53 tg Exp $'
+srcversion='$MirOS: src/bin/sleep/Build.sh,v 1.3 2021/08/13 22:29:26 tg Exp $'
 #-
 # Copyright (c) 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
 #		2011, 2012, 2013, 2014, 2015, 2016, 2017, 2019,
@@ -1293,6 +1293,18 @@ ac_test attribute_unused '' 'for __attribute__((__unused__))' <<-'EOF'
 	#undef __attribute__
 	int main(int ac __attribute__((__unused__)), char *av[]
 	    __attribute__((__unused__))) { return (isatty(0)); }
+	#endif
+EOF
+ac_test attribute_used attribute_extension 0 'for __attribute__((__used__))' <<-'EOF'
+	#if defined(__TenDRA__) || (defined(__GNUC__) && (__GNUC__ < 2))
+	extern int thiswillneverbedefinedIhope(void);
+	/* force a failure: TenDRA and gcc 1.42 have false positive here */
+	int main(void) { return (thiswillneverbedefinedIhope()); }
+	#else
+	#include <unistd.h>
+	#undef __attribute__
+	static const char fnord[] __attribute__((__used__)) = "42";
+	int main(void) { return (isatty(0)); }
 	#endif
 EOF
 
