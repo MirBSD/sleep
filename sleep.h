@@ -121,7 +121,7 @@
 #endif
 
 #ifdef EXTERN
-__RCSID("$MirOS: src/bin/sleep/sleep.h,v 1.4 2021/08/13 22:29:27 tg Exp $");
+__RCSID("$MirOS: src/bin/sleep/sleep.h,v 1.5 2021/10/03 20:48:08 tg Exp $");
 #endif
 
 #define ord(c)			((unsigned int)(unsigned char)(c))
@@ -140,3 +140,5 @@ __RCSID("$MirOS: src/bin/sleep/sleep.h,v 1.4 2021/08/13 22:29:27 tg Exp $");
 #if !HAVE_STRERROR
 #define strerror(e)		"no strerror to decode errno"
 #endif
+
+#define MIRBSD_SLEEP_VERSION	"2021-10-03"

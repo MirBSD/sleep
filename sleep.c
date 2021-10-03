@@ -21,7 +21,7 @@
 #define EXTERN
 #include "sleep.h"
 
-__RCSID("$MirOS: src/bin/sleep/sleep.c,v 1.6 2021/07/28 02:00:37 tg Exp $");
+__RCSID("$MirOS: src/bin/sleep/sleep.c,v 1.7 2021/10/03 20:48:07 tg Exp $");
 
 #ifdef SMALL
 static const char ERR[4] = { 'E', 'R', 'R', '\n' };
@@ -159,6 +159,13 @@ main(int argc, char *argv[])
 		time_t tS = 0;
 		const char *cp = argv[argp++];
 		char argvalid = 0;
+#ifndef SMALL
+		if (!strcmp(cp, "-V")) {
+			fputs("MirBSD sleep(1) " MIRBSD_SLEEP_VERSION "\n",
+			    stderr);
+			continue;
+		}
+#endif
  parse_sec:
 		if ((i = classify(cp++)) < 10) {
 			if (notoktomula(time_t, tS, 10, i)) {
@@ -265,8 +272,13 @@ main(int argc, char *argv[])
 #ifdef DEBUG
 	if (clock_gettime(CLOCK_MONOTONIC, &ts2))
 		die("clock_gettime: %s", strerror(errno));
-	timespecsub(&ts2, &ts1, &ts1);
-	printf("%llu.%09lu\n", (unsigned long long)ts1.tv_sec, ts1.tv_nsec);
+	ts2.tv_sec -= ts1.tv_sec;
+	ts2.tv_nsec -= ts1.tv_nsec;
+	if (ts2.tv_nsec < 0) {
+		ts2.tv_sec--;
+		ts2.tv_nsec += 1000000000L;
+	}
+	printf("%llu.%09lu\n", (unsigned long long)ts2.tv_sec, ts2.tv_nsec);
 #endif
 	return (0);
 }
